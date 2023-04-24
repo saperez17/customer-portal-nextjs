@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model Shop {
+  id              Int                 @id @default(autoincrement())
+  shopName        String              @map(name: "shop_name")
+  shopUrl         String?             @map(name: "shop_url")
+  createdAt       DateTime            @default(now()) @map(name: "created_at")
+  updatedAt       DateTime            @default(now()) @map(name: "updated_at")
+  accessToken     String?             @map(name: "access_token")
+  accessScopes    String?             @map(name: "access_scopes")
+  users           User[]
+  session         Session[]
+  membershipLevel MembershipEnumType? @default(free) @map(name: "membership_level")
+
+  @@map(name: "shop")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  email     String?  @unique
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  shop      Shop?    @relation(fields: [shopId], references: [id])
+  shopId    Int?     @map(name: "shop_id")
+  password  String   @default("null") 
+  session   Session?
+
+  @@index([id])
+  @@map(name: "user")
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  shop      Shop?     @relation(fields: [shopId], references: [id])
+  shopId    Int?      @map(name: "shop_id")
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int       @map(name: "user_id")
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  expiresAt DateTime @map(name: "expires_at")
+
+  @@unique([userId])
+  @@map(name: "session")
+}
+
+enum MembershipEnumType {
+  free
+  premium
+}
